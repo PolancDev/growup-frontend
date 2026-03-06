@@ -1,9 +1,11 @@
 import type { CourseModel } from '@shared/models/course.model';
 
 export interface CourseItem extends Omit<CourseModel, 'category'> {
-    category: 'DISEÑO WEB' | 'DESARROLLO' | 'ARQUITECTURA' | 'MARKETING'; // Tipado estricto para teacher
+    category: 'Diseño Web' | 'Desarrollo' | 'Arquitectura' | 'Marketing'; // Tipado estricto para teacher
     students: number;
     rating: number;
+    instructorId?: string;
+    instructorName?: string;
 }
 
 export type CourseStatus = 'Publicado' | 'Borrador' | 'En Revision';
@@ -15,6 +17,19 @@ export const STATUS_SEVERITY_MAP: Record<CourseStatus, Severity> = {
     'Borrador': 'secondary',
     'En Revision': 'warning'
 };
+
+export const COURSE_LEVELS = [
+    { label: 'Principiante', value: 'Principiante' },
+    { label: 'Intermedio', value: 'Intermedio' },
+    { label: 'Avanzado', value: 'Avanzado' }
+];
+
+export const COURSE_CATEGORIES = [
+    { label: 'Desarrollo', value: 'Desarrollo' },
+    { label: 'Diseño Web', value: 'Diseño Web' },
+    { label: 'Arquitectura', value: 'Arquitectura' },
+    { label: 'Marketing', value: 'Marketing' }
+];
 
 export interface CourseCardProps {
     course: CourseItem;

@@ -1,50 +1,86 @@
-import type { AnalyticsSummary, CoursePerformance, RevenueData } from '../models/analytics.models';
-import { CourseService } from './courses.service';
+import { Configuration, ProfesorApi } from '@shared/api';
+import type { AnalyticsSummary, CoursePerformance, RevenueData, CourseReview } from '../models/analytics.models';
+
+const basePath = import.meta.env.VITE_API_BASE_PATH;
+const profesorApi = new ProfesorApi(new Configuration({
+    basePath,
+    accessToken: () => localStorage.getItem('growup-token') || ''
+}));
+
 
 export const AnalyticsService = {
-    getSummary: (): Promise<AnalyticsSummary> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({
-                    totalRevenue: 54320.50,
-                    totalStudents: 3450,
-                    averageRating: 4.85,
-                    activeCourses: 15
-                });
-            }, 600);
-        });
+    getSummary: async (): Promise<AnalyticsSummary> => {
+        try {
+            const summary = await profesorApi.teacherAnalyticsSummaryGet()
+            console.log('summary: ', summary);
+            return {
+                totalRevenue: summary.totalRevenue || 0,
+                totalStudents: summary.totalStudents || 0,
+                averageRating: summary.averageRating || 0,
+                activeCourses: summary.activeCourses || 0
+            };
+        } catch (error) {
+            console.error('Error fetching dashboard summary:', error);
+            return {
+                totalRevenue: 0,
+                totalStudents: 0,
+                averageRating: 0,
+                activeCourses: 0
+            };
+        }
     },
 
-    getRevenueTrends: (): Promise<RevenueData[]> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve([
-                    { month: 'Ene', revenue: 4500, enrollments: 120 },
-                    { month: 'Feb', revenue: 5200, enrollments: 145 },
-                    { month: 'Mar', revenue: 4800, enrollments: 130 },
-                    { month: 'Abr', revenue: 6100, enrollments: 180 },
-                    { month: 'May', revenue: 7500, enrollments: 210 },
-                    { month: 'Jun', revenue: 8900, enrollments: 250 },
-                    { month: 'Jul', revenue: 9200, enrollments: 280 },
-                    { month: 'Ago', revenue: 8500, enrollments: 230 },
-                    { month: 'Sep', revenue: 10500, enrollments: 310 },
-                    { month: 'Oct', revenue: 12000, enrollments: 350 },
-                    { month: 'Nov', revenue: 13500, enrollments: 400 },
-                    { month: 'Dic', revenue: 15000, enrollments: 450 }
-                ]);
-            }, 800);
-        });
+    getRevenueTrends: async (): Promise<RevenueData[]> => {
+        try {
+            const revenueTrends = await profesorApi.teacherAnalyticsRevenueGet()
+            console.log('revenueTrends: ', revenueTrends);
+            return revenueTrends.map(trend => ({
+                month: trend.month || '',
+                revenue: trend.revenue || 0,
+                enrollments: trend.enrollments || 0
+            }));
+
+        } catch (error) {
+            console.error('Error fetching revenue trends:', error);
+            return [];
+        }
     },
 
     getCoursePerformance: async (): Promise<CoursePerformance[]> => {
-        const courses = await CourseService.getAllCourses();
-        return courses.map(course => ({
-            courseId: course.id,
-            courseName: course.name,
-            students: course.students,
-            revenue: course.students * course.price * 0.7, // Simulado
-            rating: course.rating,
-            status: course.publicationStatus
-        }));
+        try {
+            const performance = await profesorApi.teacherAnalyticsCoursesGet();
+            console.log('coursePerformance: ', performance);
+            return performance.map(p => ({
+                courseId: p.courseId || '',
+                courseName: p.courseName || '',
+                students: p.students || 0,
+                revenue: p.revenue || 0,
+                rating: p.rating || 0,
+                status: p.status as any
+            }));
+        } catch (error) {
+            console.error('Error fetching course performance:', error);
+            return [];
+        }
+    },
+
+    getReviews: async (): Promise<CourseReview[]> => {
+        try {
+            const reviews = await profesorApi.teacherReviewsGet();
+            console.log('reviews: ', reviews);
+            return reviews.map((r: any) => ({
+                id: r.id,
+                courseId: r.courseId,
+                courseName: r.courseName,
+                studentId: r.studentId,
+                studentName: r.studentName,
+                rating: r.rating,
+                comment: r.comment,
+                createdAt: r.createdAt
+            }));
+        } catch (error) {
+            console.error('Error fetching reviews:', error);
+            return [];
+        }
     }
 };

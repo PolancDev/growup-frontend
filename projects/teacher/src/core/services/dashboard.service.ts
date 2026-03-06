@@ -1,49 +1,79 @@
+import { Configuration, ProfesorApi } from '@shared/api';
 import type { DashboardStats, Course, Activity } from '../models/dashboard.models';
 
+const basePath = import.meta.env.VITE_API_BASE_PATH;
+const profesorApi = new ProfesorApi(new Configuration({
+    basePath,
+    accessToken: () => localStorage.getItem('growup-token') || ''
+}));
 /**
  * En React no tenemos inyección de dependencias como en Angular,
  * por lo que a menudo usamos funciones exportadas o clases simples.
  */
 export const DashboardService = {
 
-    getStats: (): Promise<DashboardStats> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({
-                    totalStudents: 1250,
-                    activeCourses: 12,
-                    averageRating: 4.8,
-                    monthlyRevenue: 3450.50,
-                    studentsGrowth: 12.5,
-                    revenueGrowth: 8.2
-                });
-            }, 800);
-        });
+    getStats: async (): Promise<DashboardStats> => {
+        try {
+            const stats = await profesorApi.teacherDashboardStatsGet();
+            console.log('stats: ', stats);
+            return {
+                totalStudents: stats.totalStudents || 0,
+                activeCourses: stats.activeCourses || 0,
+                averageRating: stats.averageRating || 0,
+                monthlyRevenue: stats.monthlyRevenue || 0,
+                studentsGrowth: stats.studentsGrowth || 0,
+                revenueGrowth: stats.revenueGrowth || 0
+            };
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            // Fallback a ceros en caso de error
+            return {
+                totalStudents: 0,
+                activeCourses: 0,
+                averageRating: 0,
+                monthlyRevenue: 0,
+                studentsGrowth: 0,
+                revenueGrowth: 0
+            };
+        }
     },
 
-    getCourses: (): Promise<Course[]> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve([
-                    { id: '1', name: 'Domina Tailwind CSS 4', category: 'Diseño Web', students: 450, rating: 4.9, price: 49.99, publicationStatus: 'Publicado', lastUpdate: '2025-01-20' },
-                    { id: '2', name: 'React Avanzado con TypeScript', category: 'Desarrollo', students: 320, rating: 4.8, price: 59.99, publicationStatus: 'Publicado', lastUpdate: '2025-01-15' },
-                    { id: '3', name: 'Angular Pro: Arquitecturas Híbridas', category: 'Desarrollo', students: 180, rating: 4.7, price: 64.99, publicationStatus: 'Borrador', lastUpdate: '2025-01-24' },
-                    { id: '4', name: 'UI/UX para Programadores', category: 'Diseño', students: 290, rating: 4.9, price: 39.99, publicationStatus: 'En Revision', lastUpdate: '2025-01-10' },
-                ]);
-            }, 500);
-        });
+    getCourses: async (): Promise<Course[]> => {
+        try {
+            const apiCourses = await profesorApi.teacherCoursesGet();
+
+            // Mapeamos de CourseItem (API) a Course (Modelo local del Dashboard)
+            return apiCourses.map(item => ({
+                id: item.id || '',
+                name: item.name,
+                category: item.category,
+                students: item.students || 0,
+                rating: item.rating || 0,
+                price: item.price,
+                publicationStatus: item.publicationStatus,
+                lastUpdate: item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : 'N/A'
+            }));
+        } catch (error) {
+            console.error('Error fetching dashboard courses:', error);
+            return [];
+        }
     },
 
-    getActivities: (): Promise<Activity[]> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve([
-                    { id: '1', user: 'Maria García', action: 'se inscribió en', target: 'Domina Tailwind CSS 4', time: 'hace 5 min', type: 'enrollment' },
-                    { id: '2', user: 'Juan Pérez', action: 'dejó una reseña en', target: 'React Avanzado', time: 'hace 20 min', type: 'review' },
-                    { id: '3', user: 'Carlos Ruiz', action: 'hizo una pregunta en', target: 'Angular Pro', time: 'hace 1 hora', type: 'question' },
-                    { id: '4', user: 'Ana López', action: 'se inscribió en', target: 'UI/UX para Programadores', time: 'hace 2 horas', type: 'enrollment' },
-                ]);
-            }, 600);
-        });
+    getActivities: async (): Promise<Activity[]> => {
+        try {
+            const apiActivities = await profesorApi.teacherActivitiesGet({ limit: 4 });
+            return apiActivities.map(act => ({
+                id: act.id,
+                user: act.user,
+                action: act.action,
+                target: act.target,
+                // Simple formateo de tiempo, podrías usar date-fns o similar para algo más pro
+                time: act.time ? new Date(act.time).toLocaleTimeString() : 'Recientemente',
+                type: act.type as 'enrollment' | 'question' | 'review'
+            }));
+        } catch (error) {
+            console.error('Error fetching dashboard activities:', error);
+            return [];
+        }
     }
 };

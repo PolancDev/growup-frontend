@@ -27,12 +27,12 @@ export interface CourseModel {
     level?: 'Principiante' | 'Intermedio' | 'Avanzado';
     price: number;
     duration?: number; // Horas totales
-    startDate?: Date | string | null;
-    endDate?: Date | string | null;
+    startDate?: Date | string | undefined | null;
+    endDate?: Date | string | undefined | null;
     publicationStatus: 'Publicado' | 'Borrador' | 'En Revision';
     createdAt?: Date | string;
     updatedAt?: Date | string;
-    deletedAt?: Date | string | null;
+    deletedAt?: Date | string | undefined | null;
     instructor?: InstructorModel;
     syllabus?: SyllabusModel[];
     enrolledCount?: number;

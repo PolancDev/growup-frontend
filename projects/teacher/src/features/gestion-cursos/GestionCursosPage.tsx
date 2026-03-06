@@ -4,28 +4,22 @@ import { CourseCard } from '../../shared/components/CourseCard';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { CourseService } from '../../core/services/courses.service';
-import type { CourseItem } from '../../core/models/courses.models';
+import { COURSE_CATEGORIES, COURSE_LEVELS, type CourseItem, type CourseStatus } from '../../core/models/courses.models';
+import { CourseLevel } from '../../../../../shared/api';
 
 export default function GestionCursosPage() {
     const navigate = useNavigate();
-    // --- ESPACIO PARA EL RETO DEL USUARIO ---
-    // [TIP]: Aquí deberías usar useState para los cursos y useEffect para cargarlos del servicio
-    // ----------------------------------------
 
     const [searchTerm, setSearchTerm] = useState('');
     const [courses, setCourses] = useState<CourseItem[]>([]);
 
     const [category, setCategory] = useState('');
+    const [level, setLevel] = useState('');
     const [status, setStatus] = useState('');
 
-    const categories = [
-        { name: 'Todas las Categorías', value: '' },
-        { name: 'Diseño Web', value: 'Diseño Web' },
-        { name: 'Desarrollo', value: 'Desarrollo' },
-        { name: 'Arquitectura', value: 'Arquitectura' }
-    ];
-
-    const statuses = [
+    const categoryOptions = [{ label: 'Todas las Categorías', value: '' }, ...COURSE_CATEGORIES];
+    const levelOptions = [{ label: 'Todos los Niveles', value: '' }, ...COURSE_LEVELS];
+    const statusOptions = [
         { name: 'Cualquier Estado', value: '' },
         { name: 'Publicado', value: 'Publicado' },
         { name: 'Borrador', value: 'Borrador' },
@@ -35,32 +29,25 @@ export default function GestionCursosPage() {
     useEffect(() => {
         const loadCourses = async () => {
             try {
-                const courses = await CourseService.getAllCourses();
-                setCourses(courses);
+                const filters = {
+                    category: category || undefined,
+                    level: (level as CourseLevel) || undefined,
+                    status: (status as CourseStatus) || undefined
+                };
+                const result = await CourseService.getAllCourses(filters);
+                setCourses(result);
             } catch (error) {
                 console.error('Error al cargar los cursos:', error);
             }
         };
         loadCourses();
-    }, []);
+    }, [category, level, status]);
 
-    // Esta variable se recalcula cada vez que cambian: searchTerm, category, status o courses
-    // Se guarda el resultado en memoria y se vuelve a calcular solo cuando cambia alguno de los valores
     const filteredCourses = useMemo(() => courses.filter((course) => {
-        // 1. Filtro por búsqueda de texto (Nombre)
-        const matchesSearch = course.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-        // 2. Filtro por Categoría (Normalizamos a mayúsculas para comparar)
-        const matchesCategory = !category || course.category.toUpperCase() === category.toUpperCase();
-
-        // 3. Filtro por Estado
-        const matchesStatus = !status || course.publicationStatus === status;
-
-        return matchesSearch && matchesCategory && matchesStatus;
-    }), [courses, searchTerm, category, status]);
+        return course.name.toLowerCase().includes(searchTerm.toLowerCase());
+    }), [courses, searchTerm]);
 
     const handleDeleteCourse = async (id: string) => {
-        // Opcional: Podrías añadir un Confirm antes de borrar
         if (window.confirm('¿Estás seguro de que deseas eliminar este curso?')) {
             try {
                 await CourseService.deleteCourse(id);
@@ -73,7 +60,6 @@ export default function GestionCursosPage() {
 
     return (
         <div className="p-4 space-y-8 animate-fade-in bg-bg dark:bg-bg min-h-screen transition-colors duration-300">
-            {/* Header de la Página */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
                     <h1 className="text-4xl font-black text-grow dark:text-grow font-sans tracking-tight italic">
@@ -92,38 +78,45 @@ export default function GestionCursosPage() {
                 </button>
             </header>
 
-            {/* Barra de Filtros */}
             <div className="bg-surface dark:bg-surface p-6 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row gap-4 items-center">
                 <div className="relative flex-1 w-full">
                     <i className="pi pi-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     <InputText
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Buscar por título o categoría..."
+                        placeholder="Buscar por título..."
                         className="w-full pr-12 py-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 focus:bg-surface dark:focus:bg-surface transition-all font-sans text-text dark:text-text"
                     />
                 </div>
                 <Dropdown
-                    placeholder="Todas las Categorías"
+                    placeholder="Categoría"
                     value={category}
                     onChange={(e) => setCategory(e.value)}
-                    options={categories}
-                    optionLabel="name"
+                    options={categoryOptions}
+                    optionLabel="label"
                     optionValue="value"
-                    className="w-full md:w-60 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans font-bold"
+                    className="w-full md:w-48 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans font-bold"
                 />
                 <Dropdown
-                    placeholder="Cualquier Estado"
+                    placeholder="Nivel"
+                    value={level}
+                    onChange={(e) => setLevel(e.value)}
+                    options={levelOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    className="w-full md:w-40 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans font-bold"
+                />
+                <Dropdown
+                    placeholder="Estado"
                     value={status}
                     onChange={(e) => setStatus(e.value)}
-                    options={statuses}
+                    options={statusOptions}
                     optionLabel="name"
                     optionValue="value"
-                    className="w-full md:w-52 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans font-bold"
+                    className="w-full md:w-44 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans font-bold"
                 />
             </div>
 
-            {/* Grid de Cursos */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {filteredCourses.map(course => (
                     <CourseCard
@@ -135,7 +128,6 @@ export default function GestionCursosPage() {
                 ))}
             </div>
 
-            {/* Estado Vacío (Opcional) */}
             {courses.length === 0 && (
                 <div className="flex flex-col items-center justify-center p-20 bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200">
                     <i className="pi pi-book text-6xl text-gray-300 mb-4"></i>

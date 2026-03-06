@@ -1,7 +1,8 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { mount } from '@teacher/bootstrap';
+import { AuthService } from '../../../core/services/auth-service';
 // Forzar a Vite a incluir estas dependencias en el bundle de Angular
 import 'react';
 import 'react-dom';
@@ -23,11 +24,18 @@ export class ReactBridgeComponent implements OnInit, OnDestroy {
     @ViewChild('reactContainer', { static: true }) container!: ElementRef;
     private unmountFn?: () => void;
     private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private auth = inject(AuthService);
     private sub?: Subscription;
 
     ngOnInit(): void {
         if (this.container) {
-            this.unmountFn = mount(this.container.nativeElement);
+            const props = {
+                ...this.route.snapshot.data,
+                instructorId: this.auth.userId(),
+                instructorName: this.auth.userName()
+            };
+            this.unmountFn = mount(this.container.nativeElement, props);
 
             // Forzamos una sincronización inmediata después del montaje
             // para que React Router detecte la URL actual en el primer renderizado

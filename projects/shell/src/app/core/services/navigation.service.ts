@@ -56,12 +56,9 @@ export class NavigationService {
         ...this.adminMenu
     ]
 
-    constructor() {
-        console.log(this.adminMenu);
-    }
+    constructor() { }
 
     getMenuItems(role: string): MenuItem[] {
-
         const menuItem = this.allMenuItems.filter(item =>
             !item.roles || item.roles.includes(role)
         );
