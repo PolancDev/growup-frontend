@@ -10,24 +10,8 @@ export const roleRedirectGuard: CanActivateChildFn = (childRoute, state) => {
   const role = auth.userRole();
   const currentUrl = state.url;
 
-  // console.log('entre en canactivatechild del guard ', role)
-  // switch (role) {
-  //   case Role.ADMIN:
-  //     return router.createUrlTree(['/admin']);
-  //   case Role.TEACHER:
-  //     return router.createUrlTree(['/formador']);
-  //   case Role.STUDENT:
-  //     return router.createUrlTree(['student']);
-  //   default:
-  //     return router.createUrlTree(['/']);
-  // }
-
-
-  //console.log('Guard CHILD ejecutado', { role, currentUrl });
-
   // 1. ADMIN
   if (role == Role.ADMIN) {
-    //console.log('entre en admin');
     if (currentUrl.startsWith('/private/admin')) return true;
     return router.createUrlTree(['/private/admin']);
   }

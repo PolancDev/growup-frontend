@@ -1,98 +1,131 @@
-//import { CourseItem } from "../../shared/components/CourseCard";
-
 import type { CourseItem } from "../models/courses.models";
+import { Configuration, CursosApi, CourseLevel, CourseStatus } from '../../../../../shared/api';
 
-const courses: CourseItem[] = [
-    {
-        id: '1',
-        name: 'Domina Tailwind CSS 4 desde Cero',
-        description: 'Aprende a maquetar interfaces modernas con la última versión de Tailwind CSS y sus nuevas capacidades de variables CSS.',
-        category: 'DISEÑO WEB',
-        students: 1240,
-        rating: 4.9,
-        price: 49.99,
-        publicationStatus: 'Publicado'
-    },
-    {
-        id: '2',
-        name: 'React 19 & Next.js: Guía Completa',
-        description: 'Domina los Server Components, las nuevas hooks y el ecosistema de Next.js para crear apps ultrarrápidas.',
-        category: 'DESARROLLO',
-        students: 850,
-        rating: 4.8,
-        price: 79.99,
-        publicationStatus: 'Publicado'
-    },
-    {
-        id: '3',
-        name: 'Arquitecturas Limpias en TypeScript',
-        description: 'Aprende SOLID, patrones de diseño y cómo estructurar proyectos escalables que duren años.',
-        category: 'ARQUITECTURA',
-        students: 450,
-        rating: 4.7,
-        price: 59.99,
-        publicationStatus: 'Borrador'
-    },
-    {
-        id: '4',
-        name: 'Arquitecturas Limpias en TypeScript',
-        description: 'Aprende SOLID, patrones de diseño y cómo estructurar proyectos escalables que duren años.',
-        category: 'ARQUITECTURA',
-        students: 450,
-        rating: 4.7,
-        price: 59.99,
-        publicationStatus: 'En Revision'
-    }
-];
-/**
- * RETO PARA EL USUARIO:
- * Implementar las llamadas a "servidor" (puedes usar el mismo estilo que DashboardService)
- */
+const API_BASE_PATH = import.meta.env.VITE_API_BASE_PATH || 'http://localhost:8080/api/v1';
+console.log('[CourseService] Utilizando API_BASE_PATH:', API_BASE_PATH);
+
+const cursosApi = new CursosApi(new Configuration({
+    basePath: API_BASE_PATH,
+    accessToken: () => localStorage.getItem('growup-token') || ''
+}));
+
+
+let currentInstructor = { id: '', name: '' };
+
 export const CourseService = {
 
-    // 1. Crear método getAllCourses() que devuelva un Promise<CourseItem[]>
-    getAllCourses(): Promise<CourseItem[]> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(courses);
-            }, 500);
-        });
+    setInstructor(data: { id: string, name: string }) {
+        console.log('[CourseService] Estableciendo instructor:', data);
+        currentInstructor = data;
     },
-    // 2. Crear método deleteCourse(id)
-    deleteCourse(id: string): Promise<void> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const index = courses.findIndex((course) => course.id === id);
-                if (index !== -1) {
-                    courses.splice(index, 1);
-                }
-                resolve();
-            }, 500);
-        });
+
+    getInstructor() {
+        return currentInstructor;
     },
-    // 3. Crear método updateCourse(id, data)
-    updateCourse(id: string, data: Partial<CourseItem>): Promise<CourseItem> {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const index = courses.findIndex((course) => course.id === id);
-                if (index !== -1) {
-                    Object.assign(courses[index], data);
-                    resolve(courses[index]);
-                } else {
-                    // Si no existe, informamos del error
-                    reject(new Error(`Curso con id ${id} no encontrado`));
-                }
-            }, 500);
-        });
+
+    async getAllCourses(filters: { category?: string, level?: CourseLevel, status?: CourseStatus } = {}): Promise<CourseItem[]> {
+        try {
+            console.log('[CourseService] Obteniendo todos los cursos con filtros:', filters);
+            const apiCourses = await cursosApi.coursesGet(filters);
+            console.log('[CourseService] Cursos obtenidos:', apiCourses);
+            if (apiCourses && apiCourses.length > 0) {
+                return apiCourses as unknown as CourseItem[];
+            }
+        } catch (error) {
+            throw new Error('Error al obtener cursos: ' + error);
+        }
+        //console.warn('No se han encontrado cursos');
+        return [];
     },
-    // 4. Crear método createCourse(data)
-    createCourse(data: CourseItem): Promise<CourseItem> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                courses.push(data);
-                resolve(data);
-            }, 500);
-        });
+
+    async deleteCourse(id: string): Promise<void> {
+        try {
+            console.log('[CourseService] Eliminando curso en API:', id);
+            await cursosApi.coursesIdDelete({ id });
+            console.log('[CourseService] Curso eliminado exitosamente');
+        } catch (error) {
+            console.error('[CourseService] Error al eliminar curso:', error);
+            throw error;
+        }
+    },
+
+    async updateCourse(id: string, data: Partial<CourseItem>): Promise<CourseItem> {
+        try {
+            console.log('[CourseService] Iniciando actualización de curso:', id, data);
+
+            // 1. Obtener estado actual
+            const currentCourse = await cursosApi.coursesIdGet({ id });
+
+            console.log('[CourseService] Curso actual:', currentCourse);
+            // 2. Mezclar datos y manejar fechas
+            const updatedCourse: any = {
+                ...currentCourse,
+                ...data,
+                startDate: data.startDate ? new Date(data.startDate) : currentCourse.startDate,
+                endDate: data.endDate ? new Date(data.endDate) : currentCourse.endDate,
+            };
+
+            // 3. Limpiar campos de CourseItem que no están en Course
+            delete updatedCourse.students;
+            delete updatedCourse.rating;
+            delete updatedCourse.instructorId;
+            delete updatedCourse.instructorName;
+
+            // 4. Asegurar que el instructor tenga todos los campos requeridos, especialmente el rol
+            updatedCourse.instructor = {
+                ...currentCourse.instructor,
+                id: data.instructorId || currentCourse.instructor?.id || currentInstructor.id,
+                name: data.instructorName || currentCourse.instructor?.name || currentInstructor.name,
+                role: currentCourse.instructor?.role || 'TEACHER' // Garantizamos que no sea null
+            };
+
+            console.log('[CourseService] Enviando PUT a API:', updatedCourse);
+            const apiResult = await cursosApi.coursesIdPut({ id, course: updatedCourse });
+
+            return apiResult as unknown as CourseItem;
+        } catch (error) {
+            console.error('[CourseService] Error al actualizar curso:', error);
+            throw error;
+        }
+    },
+
+    async createCourse(data: CourseItem): Promise<CourseItem> {
+        console.log('[CourseService] Iniciando creación de curso:', data);
+
+        // Mapeamos los datos al formato que espera la API (Course)
+        // Eliminamos nulls de fechas y estructuramos instructor
+        const courseForApi = {
+            ...data,
+            startDate: data.startDate || undefined,
+            endDate: data.endDate || undefined,
+            instructor: {
+                id: currentInstructor.id,
+                name: currentInstructor.name,
+                role: 'TEACHER' // Rol por defecto requerido por Instructor
+            }
+        };
+
+        // Limpiamos campos que no existen en el modelo Course de la API
+        const cleanedCourse: any = { ...courseForApi };
+        delete cleanedCourse.instructorId;
+        delete cleanedCourse.instructorName;
+        delete cleanedCourse.students;
+        delete cleanedCourse.rating;
+
+        try {
+            console.log('[CourseService] Enviando a API:', cleanedCourse);
+            const apiCurso = await cursosApi.coursesPost({ course: cleanedCourse });
+
+            if (apiCurso) {
+                console.log('[CourseService] Curso creado exitosamente:', apiCurso);
+                return apiCurso as unknown as CourseItem;
+            }
+        } catch (error) {
+            console.error('[CourseService] Error al crear el curso en la API:', error);
+            throw error;
+        }
+
+        throw new Error('No se recibió respuesta válida de la API al crear el curso');
     }
 
 };

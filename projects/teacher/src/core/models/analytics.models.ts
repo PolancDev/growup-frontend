@@ -21,3 +21,14 @@ export interface AnalyticsSummary {
     averageRating: number;
     activeCourses: number;
 }
+
+export interface CourseReview {
+    id: string;
+    courseId: string;
+    courseName?: string;
+    studentId?: string;
+    studentName?: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+}

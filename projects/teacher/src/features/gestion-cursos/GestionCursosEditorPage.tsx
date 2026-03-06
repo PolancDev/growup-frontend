@@ -12,6 +12,7 @@ import { addLocale } from 'primereact/api';
 import type { SyllabusModel } from '@shared/models/course.model';
 import { CourseService } from '../../core/services/courses.service';
 import type { CourseItem } from '../../core/models/courses.models';
+import { COURSE_CATEGORIES, COURSE_LEVELS } from '../../core/models/courses.models';
 
 // Configurar locale español para PrimeReact
 addLocale('es', {
@@ -34,7 +35,7 @@ export default function GestionCursosEditorPage() {
     const [form, setForm] = useState<{
         name: string;
         description: string;
-        category: 'DISEÑO WEB' | 'DESARROLLO' | 'ARQUITECTURA' | '';
+        category: string;
         level: string;
         price: number;
         startDate: Date | null;
@@ -42,18 +43,39 @@ export default function GestionCursosEditorPage() {
     }>({
         name: '',
         description: '',
-        category: '',
-        level: '',
+        category: COURSE_CATEGORIES[0].value as any,
+        level: COURSE_LEVELS[0].value,
         price: 0,
         startDate: null,
         endDate: null,
     });
 
-    const [syllabus, setSyllabus] = useState<SyllabusModel[]>([
-        { title: 'Introducción', description: 'Conceptos básicos', topics: [{ title: 'Bienvenida', duration: 5 }] }
-    ]);
+    const [syllabus, setSyllabus] = useState<SyllabusModel[]>([])
+    //     { title: 'Introducción', description: 'Conceptos básicos', topics: [{ title: 'Bienvenida', duration: 5 }] }
+    // ]);
 
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Función de validación
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+
+        if (!form.name.trim()) newErrors.name = 'El nombre del curso es obligatorio';
+        if (!form.description.trim()) newErrors.description = 'La descripción es obligatoria';
+        if (!form.category) newErrors.category = 'La categoría es obligatoria';
+        if (!form.level) newErrors.level = 'El nivel es obligatorio';
+        if (form.price <= 0) newErrors.price = 'El precio debe ser mayor a 0';
+        if (!form.startDate) newErrors.startDate = 'La fecha de inicio es obligatoria';
+        if (!form.endDate) newErrors.endDate = 'La fecha de fin es obligatoria';
+
+        if (form.startDate && form.endDate && form.startDate > form.endDate) {
+            newErrors.endDate = 'La fecha de fin debe ser posterior a la de inicio';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     // Cargar datos del curso si estamos en modo edición
     useEffect(() => {
@@ -66,8 +88,8 @@ export default function GestionCursosEditorPage() {
                         setForm({
                             name: course.name,
                             description: course.description || '',
-                            category: course.category as 'DISEÑO WEB' | 'DESARROLLO' | 'ARQUITECTURA',
-                            level: course.level || 'Intermedio',
+                            category: course.category as 'DISEÑO WEB' | 'DESARROLLO' | 'ARQUITECTURA' | 'MARKETING',
+                            level: course.level as 'Principiante' | 'Intermedio' | 'Avanzado',
                             price: course.price,
                             startDate: course.startDate ? new Date(course.startDate) : null,
                             endDate: course.endDate ? new Date(course.endDate) : null,
@@ -81,18 +103,6 @@ export default function GestionCursosEditorPage() {
         }
     }, [id, isEdit]);
 
-    const levels = [
-        { label: 'Principiante', value: 'Principiante' },
-        { label: 'Intermedio', value: 'Intermedio' },
-        { label: 'Avanzado', value: 'Avanzado' }
-    ];
-
-    const categories = [
-        { label: 'Desarrollo', value: 'DESARROLLO' },
-        { label: 'Diseño Web', value: 'DISEÑO WEB' },
-        { label: 'Arquitectura', value: 'ARQUITECTURA' },
-        { label: 'Marketing', value: 'MARKETING' }
-    ];
 
     // Handlers para actualizar el formulario
     const handleInputChange = (field: keyof typeof form, value: any) => {
@@ -136,18 +146,22 @@ export default function GestionCursosEditorPage() {
 
     // Función para guardar como borrador (solo en modo edición)
     const handleSaveDraft = async () => {
-        if (!form.category) {
-            console.error('La categoría es obligatoria');
+        console.log('Guardando borrador: ', form);
+
+        // Para borrador permitimos guardar con menos validaciones, 
+        // pero al menos necesitamos el nombre o categoría si se ha tocado algo.
+        if (!form.name.trim()) {
+            setErrors({ name: 'El nombre es necesario incluso para borradores' });
             return;
         }
 
         setLoading(true);
         try {
             const courseData: CourseItem = {
-                id: id || String(Date.now()),
+                id: id || self.crypto.randomUUID(),
                 name: form.name,
                 description: form.description,
-                category: form.category as 'DISEÑO WEB' | 'DESARROLLO' | 'ARQUITECTURA' | 'MARKETING',
+                category: form.category as 'Diseño Web' | 'Desarrollo' | 'Arquitectura' | 'Marketing',
                 students: 0,
                 rating: 0,
                 price: form.price,
@@ -159,6 +173,7 @@ export default function GestionCursosEditorPage() {
             };
 
             if (isEdit && id) {
+                console.log('Curso a modificar: ', courseData)
                 await CourseService.updateCourse(id, courseData);
                 console.log('Curso guardado como borrador');
             }
@@ -173,18 +188,20 @@ export default function GestionCursosEditorPage() {
 
     // Función para guardar nuevo curso (solo en modo creación)
     const handleSaveNew = async () => {
-        if (!form.category) {
-            console.error('La categoría es obligatoria');
+        console.log('Guardando nuevo curso: ', form);
+
+        if (!validateForm()) {
+            console.error('Formulario inválido', errors);
             return;
         }
 
         setLoading(true);
         try {
             const courseData: CourseItem = {
-                id: String(Date.now()),
+                id: self.crypto.randomUUID(),
                 name: form.name,
                 description: form.description,
-                category: form.category as 'DISEÑO WEB' | 'DESARROLLO' | 'ARQUITECTURA' | 'MARKETING',
+                category: form.category as 'Diseño Web' | 'Desarrollo' | 'Arquitectura' | 'Marketing',
                 students: 0,
                 rating: 0,
                 price: form.price,
@@ -208,18 +225,18 @@ export default function GestionCursosEditorPage() {
 
     // Función para publicar el curso
     const handlePublish = async () => {
-        if (!form.category) {
-            console.error('La categoría es obligatoria');
+        if (!validateForm()) {
+            console.error('Formulario inválido para publicar');
             return;
         }
 
         setLoading(true);
         try {
             const courseData: CourseItem = {
-                id: id || String(Date.now()),
+                id: id || self.crypto.randomUUID(),
                 name: form.name,
                 description: form.description,
-                category: form.category as 'DISEÑO WEB' | 'DESARROLLO' | 'ARQUITECTURA' | 'MARKETING',
+                category: form.category as 'Diseño Web' | 'Desarrollo' | 'Arquitectura' | 'Marketing',
                 students: 0,
                 rating: 0,
                 price: form.price,
@@ -308,40 +325,56 @@ export default function GestionCursosEditorPage() {
                             <div className="flex flex-col gap-2">
                                 <label className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">Título del Curso</label>
                                 <InputText placeholder="Ej: Master en React 19 y Next.js"
-                                    className="w-full p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans text-lg focus:bg-surface dark:focus:bg-surface text-text dark:text-text"
+                                    className={`w-full p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans text-lg focus:bg-surface dark:focus:bg-surface text-text dark:text-text ${errors.name ? 'p-invalid border-red-500' : ''}`}
                                     value={form.name}
-                                    onChange={(e) => handleInputChange('name', e.target.value)}
+                                    onChange={(e) => {
+                                        handleInputChange('name', e.target.value);
+                                        if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+                                    }}
                                 />
+                                {errors.name && <small className="text-red-500 ml-1 font-bold">{errors.name}</small>}
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">Descripción Corta</label>
                                 <InputTextarea rows={3}
                                     placeholder="Describe brevemente de qué trata el curso..."
-                                    className="w-full p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans focus:bg-surface dark:focus:bg-surface text-text dark:text-text"
+                                    className={`w-full p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans focus:bg-surface dark:focus:bg-surface text-text dark:text-text ${errors.description ? 'p-invalid border-red-500' : ''}`}
                                     value={form.description}
-                                    onChange={(e) => handleInputChange('description', e.target.value)}
+                                    onChange={(e) => {
+                                        handleInputChange('description', e.target.value);
+                                        if (errors.description) setErrors(prev => ({ ...prev, description: '' }));
+                                    }}
                                 />
+                                {errors.description && <small className="text-red-500 ml-1 font-bold">{errors.description}</small>}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">Categoría</label>
                                     <Dropdown
-                                        options={categories}
+                                        options={COURSE_CATEGORIES}
                                         placeholder="Selecciona categoría"
-                                        className="w-full rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans"
+                                        className={`w-full rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans ${errors.category ? 'p-invalid border-red-500' : ''}`}
                                         value={form.category}
-                                        onChange={(e) => handleInputChange('category', e.value)}
+                                        onChange={(e) => {
+                                            handleInputChange('category', e.value);
+                                            if (errors.category) setErrors(prev => ({ ...prev, category: '' }));
+                                        }}
                                     />
+                                    {errors.category && <small className="text-red-500 ml-1 font-bold">{errors.category}</small>}
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">Nivel</label>
                                     <Dropdown
-                                        options={levels}
+                                        options={COURSE_LEVELS}
                                         placeholder="Nivel del curso"
-                                        className="w-full rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans"
+                                        className={`w-full rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-sans ${errors.level ? 'p-invalid border-red-500' : ''}`}
                                         value={form.level}
-                                        onChange={(e) => handleInputChange('level', e.value)}
+                                        onChange={(e) => {
+                                            handleInputChange('level', e.value);
+                                            if (errors.level) setErrors(prev => ({ ...prev, level: '' }));
+                                        }}
                                     />
+                                    {errors.level && <small className="text-red-500 ml-1 font-bold">{errors.level}</small>}
                                 </div>
                             </div>
                         </div>
@@ -359,12 +392,16 @@ export default function GestionCursosEditorPage() {
                                     showIcon
                                     placeholder="dd/mm/aaaa"
                                     className="w-full"
-                                    inputClassName="p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50"
+                                    inputClassName={`p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 ${errors.startDate ? 'p-invalid border-red-500' : ''}`}
                                     value={form.startDate}
-                                    onChange={(e) => handleInputChange('startDate', e.value as Date | null)}
+                                    onChange={(e) => {
+                                        handleInputChange('startDate', e.value as Date | null);
+                                        if (errors.startDate) setErrors(prev => ({ ...prev, startDate: '' }));
+                                    }}
                                     dateFormat="dd/mm/yy"
                                     locale="es"
                                 />
+                                {errors.startDate && <small className="text-red-500 ml-1 font-bold">{errors.startDate}</small>}
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1">Fecha de Fin</label>
@@ -372,12 +409,16 @@ export default function GestionCursosEditorPage() {
                                     showIcon
                                     placeholder="dd/mm/aaaa"
                                     className="w-full"
-                                    inputClassName="p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50"
+                                    inputClassName={`p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 ${errors.endDate ? 'p-invalid border-red-500' : ''}`}
                                     value={form.endDate}
-                                    onChange={(e) => handleInputChange('endDate', e.value as Date | null)}
+                                    onChange={(e) => {
+                                        handleInputChange('endDate', e.value as Date | null);
+                                        if (errors.endDate) setErrors(prev => ({ ...prev, endDate: '' }));
+                                    }}
                                     dateFormat="dd/mm/yy"
                                     locale="es"
                                 />
+                                {errors.endDate && <small className="text-red-500 ml-1 font-bold">{errors.endDate}</small>}
                             </div>
                         </div>
                     </section>
@@ -400,6 +441,13 @@ export default function GestionCursosEditorPage() {
                                             placeholder={`Título de la Sección ${sIdx + 1}`}
                                             className="font-black text-lg p-3 bg-transparent border-none border-b border-gray-200 dark:border-gray-800 rounded-none focus:shadow-none focus:border-brand-500 text-text dark:text-text"
                                             onChange={(e) => handleSectionChange(sIdx, 'title', e.target.value)}
+                                        />
+                                        <InputTextarea
+                                            value={section.description}
+                                            placeholder="Descripción breve del contenido de este módulo..."
+                                            rows={2}
+                                            className="w-full p-3 mt-2 bg-surface/50 dark:bg-surface/50 rounded-xl border-gray-100 dark:border-gray-800 text-sm text-text dark:text-text focus:border-brand-500"
+                                            onChange={(e) => handleSectionChange(sIdx, 'description', e.target.value)}
                                         />
                                     </div>
 
@@ -469,11 +517,15 @@ export default function GestionCursosEditorPage() {
                                 currency="EUR"
                                 locale="es-ES"
                                 className="w-full"
-                                inputClassName="p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-black text-2xl text-text dark:text-text"
+                                inputClassName={`p-4 rounded-2xl border-gray-100 dark:border-gray-800 bg-bg dark:bg-bg/50 font-black text-2xl text-text dark:text-text ${errors.price ? 'p-invalid border-red-500' : ''}`}
                                 placeholder="0,00 €"
                                 value={form.price}
-                                onValueChange={(e) => handleInputChange('price', e.value || 0)}
+                                onValueChange={(e) => {
+                                    handleInputChange('price', e.value || 0);
+                                    if (errors.price) setErrors(prev => ({ ...prev, price: '' }));
+                                }}
                             />
+                            {errors.price && <small className="text-red-500 ml-1 font-bold">{errors.price}</small>}
                         </div>
                     </section>
 
@@ -483,7 +535,7 @@ export default function GestionCursosEditorPage() {
                         <div className="flex items-center gap-4 bg-bg dark:bg-bg p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Teacher" alt="Instructor" className="w-12 h-12 rounded-full border-2 border-white dark:border-gray-700 shadow-sm" />
                             <div>
-                                <p className="font-black text-text dark:text-text leading-tight">Juan Formador</p>
+                                <p className="font-black text-text dark:text-text leading-tight">{CourseService.getInstructor().name || 'Juan Formador'}</p>
                                 <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Autor del Curso</p>
                             </div>
                             <Button icon="pi pi-external-link" className="p-button-text p-button-rounded p-button-sm ml-auto text-gray-400 hover:text-brand-500" />

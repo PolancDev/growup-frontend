@@ -14,6 +14,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onEdit, onDelete
                     src={course.imageUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${course.id}`}
                     alt={course.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    onError={(e) => {
+                        console.warn(`[CourseCard] Failed to load image URL: ${course.imageUrl}`);
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null; // Evitar loops infinitos
+                        target.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${course.id}`;
+                    }}
                 />
                 <div className="absolute top-4 right-4">
                     <Tag
