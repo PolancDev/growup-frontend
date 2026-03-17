@@ -1,6 +1,7 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChangeDetection, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideZonelessChangeDetection } from '@angular/core';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { providePrimeNG } from 'primeng/config';
@@ -8,6 +9,9 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import Aura from '@primeng/themes/aura';
 import { MessageService } from 'primeng/api';
 import { provideServiceWorker } from '@angular/service-worker';
+import { AUTH_INTERCEPTOR_PROVIDER } from '@shared/interceptors';
+import { API_BASE_URL } from '@shared/api/api-tokens';
+import { environment } from '../environments/environment';
 
 
 export const appConfig: ApplicationConfig = {
@@ -15,6 +19,9 @@ export const appConfig: ApplicationConfig = {
     // provideZoneChangeDetection({ eventCoalescing: true }),
     provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),
+    provideHttpClient(withInterceptorsFromDi()),
+    AUTH_INTERCEPTOR_PROVIDER,
+    { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
     provideRouter(routes),
     provideAnimationsAsync(),
     providePrimeNG({
@@ -28,8 +35,8 @@ export const appConfig: ApplicationConfig = {
     }),
     MessageService,
     provideServiceWorker('ngsw-worker.js', {
-      enabled: true, // Forzar habilitado para pruebas
-      registrationStrategy: 'registerImmediately'
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
     })
   ]
 };

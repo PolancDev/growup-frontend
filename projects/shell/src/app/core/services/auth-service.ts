@@ -1,4 +1,5 @@
-import { computed, effect, Injectable, signal } from '@angular/core';
+import { computed, effect, Injectable, signal, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthStatus } from '@shared/models/auth-status.enum';
 import { User } from '@shared/interfaces/user.interface';
 import { catchError, from, map, Observable, of } from 'rxjs';
@@ -7,9 +8,7 @@ import { AutenticacinApi } from '../../../../../../shared/api/apis/AutenticacinA
 import { Configuration } from '../../../../../../shared/api/runtime';
 import { environment } from '../../../environments/environment';
 import { AuthResponse } from '@shared/api/models';
-
-
-
+import { ApiConfigService } from '@shared/api/api-config.service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,14 +18,20 @@ export class AuthService {
   private _statusUser = signal<AuthStatus>(AuthStatus.authenticated);
   private _user = signal<User | null>(null);
   private _token = signal<string | null>(localStorage.getItem('growup-token') || '');
-  private authApi = new AutenticacinApi(new Configuration({ basePath: environment.apiBaseUrl }));
+  
+  private apiConfig = inject(ApiConfigService);
+  private authApi = new AutenticacinApi(this.apiConfig.configuration);
+  private router: Router;
+
+  constructor() {
+    this.router = inject(Router);
+  }
 
   checkAuthStatus() {
     const token = localStorage.getItem('growup-token');
     if (token) {
       const decoded = this.decodeToken(token);
-      if (decoded) {
-        // Reconstruimos el usuario básico desde el token
+      if (decoded && !this.isTokenExpired(decoded)) {
         this._user.set({
           id: decoded.sub || '',
           role: (decoded.role || decoded.roles?.[0] || Role.STUDENT) as Role,
@@ -37,12 +42,29 @@ export class AuthService {
         this._statusUser.set(AuthStatus.authenticated);
         this._token.set(token);
 
-        console.log('user: ', this._user());
+        console.log('GrowUp-Log: checkAuthStatus - Token válido para:', decoded.email);
         return true;
+      } else {
+        console.log('GrowUp-Log: checkAuthStatus - Token expirado o inválido');
+        this.clearAuth();
       }
     }
-    this.logout();
+    console.log('GrowUp-Log: checkAuthStatus - No hay token');
+    this.clearAuth();
     return false;
+  }
+
+  private isTokenExpired(decoded: any): boolean {
+    if (!decoded.exp) {
+      return true;
+    }
+    const expDate = new Date(decoded.exp * 1000);
+    const now = new Date();
+    const isExpired = expDate.getTime() < now.getTime();
+    if (isExpired) {
+      console.log('GrowUp-Log: isTokenExpired - Token expiró:', expDate, 'Ahora:', now);
+    }
+    return isExpired;
   }
 
   private decodeToken(token: string): any {
@@ -62,19 +84,13 @@ export class AuthService {
 
 
   authStatus = computed<AuthStatus>(() => {
-    //Revisando el usuario
     if (this._statusUser() === AuthStatus.checking) return AuthStatus.checking
-
-    //Si hay user es que estamos autenticados
-    //console.log('user: ', this._user());
     if (this._token()) {
       return AuthStatus.authenticated;
     }
     return AuthStatus.notAuthenticated
   })
 
-  //Valor get en el que enviamos el valor de ese usuario
-  //El computed es de solo lectura y asi no podemos modificar su valor, ya que depende del signal _user
   user = computed<User | null>(() => this._user())
   token = computed(() => this._token())
 
@@ -110,13 +126,18 @@ export class AuthService {
   }
 
 
-  logout() {
-    //console.log('logout');
+  private clearAuth() {
     this._user.set(null);
     this._statusUser.set(AuthStatus.notAuthenticated);
     this._token.set(null);
-
     localStorage.removeItem('growup-token');
+  }
+
+  logout() {
+    this.clearAuth();
+    if (this.router) {
+      this.router.navigate(['/auth/login']);
+    }
   }
 
   private handleAuthSuccess({ token, user }: AuthResponse) {

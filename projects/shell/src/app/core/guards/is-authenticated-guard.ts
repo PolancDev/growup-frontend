@@ -1,19 +1,25 @@
 import { Router, type CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth-service';
 import { inject } from '@angular/core';
-import { AuthStatus } from '@shared/models/auth-status.enum';
 import { Role } from '@shared/models/role.enum';
 
 export const isAuthenticatedGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  //authService.checkAuthStatus();
+  const isAuthenticated = authService.checkAuthStatus();
 
-  if (authService.authStatus() === AuthStatus.authenticated) {
-    const role = authService.userRole();
-    console.log('role: ', role);
+  // Si NO está autenticado, permitir acceso a /auth
+  if (!isAuthenticated) {
+    return true;
+  }
 
+  // Si YA está autenticado, redirigir según rol
+  const role = authService.userRole();
+  const currentPath = state.url;
+  const isAuthRoute = currentPath.startsWith('/auth');
+
+  if (isAuthRoute) {
     switch (role) {
       case Role.ADMIN:
         router.navigate(['/private/admin']);
@@ -22,13 +28,10 @@ export const isAuthenticatedGuard: CanActivateFn = (route, state) => {
         router.navigate(['/private/teacher']);
         break;
       case Role.STUDENT:
-        router.navigate(['/private/student']);
-        break;
       default:
         router.navigate(['/private/student']);
     }
-
-    return false;
   }
-  return true;
+  
+  return false;
 };
