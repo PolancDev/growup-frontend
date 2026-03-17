@@ -4,7 +4,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { RouterModule } from '@angular/router';
-import { EnrolledCourse } from '../../../core/models/enrollment.model';
+import { EnrolledCourse } from '@shared/api/models';
 
 
 @Component({
@@ -20,6 +20,9 @@ import { EnrolledCourse } from '../../../core/models/enrollment.model';
     templateUrl: './enrolled-course-card.html'
 })
 export class EnrolledCourseCardComponent {
+
+    readonly fallbackImageUrl = '/assets/no-image.svg';
+
     /**
      * El curso inscrito a mostrar.
      * Usamos Signal Input (obligatorio en este caso).
@@ -56,5 +59,14 @@ export class EnrolledCourseCardComponent {
             case 'archived': return 'pi pi-refresh';
             default: return 'pi pi-play';
         }
+    }
+
+    onImageError(event: Event): void {
+        const image = event.target as HTMLImageElement;
+        if (image.dataset['fallbackApplied'] === '1') {
+            return;
+        }
+        image.dataset['fallbackApplied'] = '1';
+        image.src = this.fallbackImageUrl;
     }
 }

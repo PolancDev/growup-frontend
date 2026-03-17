@@ -14,7 +14,7 @@ import { RatingModule } from 'primeng/rating';
 import { AccordionModule } from 'primeng/accordion';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
-import { CourseModel } from '../../../core/models/course.model';
+import { Course } from '../../../../../../../shared/api/models';
 
 
 @Component({
@@ -43,8 +43,12 @@ export class CourseDetail implements OnInit {
   private router = inject(Router);
   private courseService = inject(CourseService);
 
+  readonly fallbackImageUrl = '/assets/no-image.svg';
+
   // Signals para reactividad
-  course = signal<CourseModel | undefined>(undefined);
+  course = signal<Course | undefined>(undefined);
+  enrolling = signal(false);
+  enrollmentError = signal<string | null>(null);
 
   cancel: boolean = false;
   value: number | null = 0;
@@ -59,19 +63,60 @@ export class CourseDetail implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log('course-detail');
     this.valuerating = 3;
-    //this.value = 0; // Abrir el primer módulo por defecto
-
     const id = this.route.snapshot.paramMap.get('id');
+    this.enrolling.set(false);
+
     if (id) {
-      const foundCourse = this.courseService.getCourseById(id);
-      //console.log('Curso encontrado: ', foundCourse)
-      if (foundCourse) {
-        this.course.set(foundCourse);
-      } else {
-        this.router.navigate(['/courses']); // Redirigir si no existe
-      }
+      this.courseService.getCourseById(id).subscribe({
+        next: (course) => {
+          this.course.set(course);
+          console.log('course: ', course);
+        },
+        error: (error) => {
+          console.log('error: ', error);
+          this.router.navigate(['private/student/catalogo'])
+        }
+      });
     }
 
+    this.courseService.isEnrolled(id).subscribe({
+      next: (enrolled) => {
+        this.enrolling.set(enrolled);
+      },
+      error: (error) => {
+        console.log('error: ', error);
+        this.router.navigate(['private/student/catalogo'])
+      }
+    });
+
+  }
+
+  onEnroll(): void {
+    console.log('enroll: ', this.course()?.id);
+
+    this.courseService.enrollCourse(this.course()?.id).subscribe({
+      next: (course) => {
+        this.course.set(course);
+        this.enrolling.set(true);
+        console.log('course: ', course);
+      },
+      error: (error) => {
+        console.log('error: ', error);
+        this.enrollmentError.set(error.message);
+      }
+    });
+    this.router.navigate(['private/student/catalogo']);
+  }
+
+  onImageError(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (image.dataset['fallbackApplied'] === '1') {
+      return;
+    }
+    image.dataset['fallbackApplied'] = '1';
+    image.src = this.fallbackImageUrl;
   }
 }
+

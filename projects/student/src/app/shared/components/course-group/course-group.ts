@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EnrolledCourse } from '../../../core/models/enrollment.model';
+import { EnrolledCourse } from '@shared/api/models';
 import { EnrolledCourseCardComponent } from '../enrolled-course-card/enrolled-course-card';
 
 @Component({

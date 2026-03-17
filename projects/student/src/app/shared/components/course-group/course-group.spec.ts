@@ -1,13 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MessageService } from 'primeng/api';
 import { API_BASE_URL } from '@shared/api/api-tokens';
 
-import { CourseDetail } from './course-detail';
+import { CourseGroupComponent } from './course-group';
 
-describe('CourseDetail', () => {
-  let component: CourseDetail;
-  let fixture: ComponentFixture<CourseDetail>;
+describe('CourseGroupComponent', () => {
+  let component: CourseGroupComponent;
+  let fixture: ComponentFixture<CourseGroupComponent>;
 
   beforeEach(async () => {
     Object.defineProperty(window, 'matchMedia', {
@@ -25,7 +24,7 @@ describe('CourseDetail', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [CourseDetail, RouterTestingModule],
+      imports: [CourseGroupComponent],
       providers: [
         MessageService,
         { provide: API_BASE_URL, useValue: 'http://localhost:8080' }
@@ -33,9 +32,8 @@ describe('CourseDetail', () => {
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(CourseDetail);
+    fixture = TestBed.createComponent(CourseGroupComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   it('should create', () => {
