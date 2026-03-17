@@ -46,6 +46,12 @@ export interface Syllabus {
      */
     description: string;
     /**
+     * Orden del módulo en el syllabus
+     * @type {number}
+     * @memberof Syllabus
+     */
+    order: number;
+    /**
      * Lista de temas del módulo
      * @type {Array<Topic>}
      * @memberof Syllabus
@@ -59,6 +65,7 @@ export interface Syllabus {
 export function instanceOfSyllabus(value: object): value is Syllabus {
     if (!('title' in value) || value['title'] === undefined) return false;
     if (!('description' in value) || value['description'] === undefined) return false;
+    if (!('order' in value) || value['order'] === undefined) return false;
     if (!('topics' in value) || value['topics'] === undefined) return false;
     return true;
 }
@@ -76,6 +83,7 @@ export function SyllabusFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'id': json['id'] == null ? undefined : json['id'],
         'title': json['title'],
         'description': json['description'],
+        'order': json['order'],
         'topics': ((json['topics'] as Array<any>).map(TopicFromJSON)),
     };
 }
@@ -94,6 +102,7 @@ export function SyllabusToJSONTyped(value?: Syllabus | null, ignoreDiscriminator
         'id': value['id'],
         'title': value['title'],
         'description': value['description'],
+        'order': value['order'],
         'topics': ((value['topics'] as Array<any>).map(TopicToJSON)),
     };
 }

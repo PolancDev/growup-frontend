@@ -15,6 +15,9 @@
 
 import * as runtime from '../runtime';
 import type {
+  Course,
+  CourseLevel,
+  CourseStatus,
   EnrolledCourse,
   ErrorResponse,
   Notification,
@@ -22,6 +25,12 @@ import type {
   StudentStats,
 } from '../models/index';
 import {
+    CourseFromJSON,
+    CourseToJSON,
+    CourseLevelFromJSON,
+    CourseLevelToJSON,
+    CourseStatusFromJSON,
+    CourseStatusToJSON,
     EnrolledCourseFromJSON,
     EnrolledCourseToJSON,
     ErrorResponseFromJSON,
@@ -38,9 +47,19 @@ export interface CoursesIdEnrollPostRequest {
     id: string;
 }
 
+export interface CoursesIdEnrolledGetRequest {
+    id: string;
+}
+
 export interface CoursesIdReviewsPostRequest {
     id: string;
     review: Review;
+}
+
+export interface StudentCatalogGetRequest {
+    category?: string;
+    level?: CourseLevel;
+    status?: CourseStatus;
 }
 
 export interface StudentNotificationsGetRequest {
@@ -112,6 +131,65 @@ export class EstudianteApi extends runtime.BaseAPI {
     }
 
     /**
+     * Creates request options for coursesIdEnrolledGet without sending the request
+     */
+    async coursesIdEnrolledGetRequestOpts(requestParameters: CoursesIdEnrolledGetRequest): Promise<runtime.RequestOpts> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling coursesIdEnrolledGet().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("BearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/courses/{id}/enrolled`;
+        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Verifica si el estudiante autenticado está inscrito en un curso
+     * Verificar inscripción en un curso
+     */
+    async coursesIdEnrolledGetRaw(requestParameters: CoursesIdEnrolledGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
+        const requestOptions = await this.coursesIdEnrolledGetRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<boolean>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Verifica si el estudiante autenticado está inscrito en un curso
+     * Verificar inscripción en un curso
+     */
+    async coursesIdEnrolledGet(requestParameters: CoursesIdEnrolledGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
+        const response = await this.coursesIdEnrolledGetRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Creates request options for coursesIdReviewsPost without sending the request
      */
     async coursesIdReviewsPostRequestOpts(requestParameters: CoursesIdReviewsPostRequest): Promise<runtime.RequestOpts> {
@@ -173,6 +251,65 @@ export class EstudianteApi extends runtime.BaseAPI {
      */
     async coursesIdReviewsPost(requestParameters: CoursesIdReviewsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Review> {
         const response = await this.coursesIdReviewsPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates request options for studentCatalogGet without sending the request
+     */
+    async studentCatalogGetRequestOpts(requestParameters: StudentCatalogGetRequest): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        if (requestParameters['category'] != null) {
+            queryParameters['category'] = requestParameters['category'];
+        }
+
+        if (requestParameters['level'] != null) {
+            queryParameters['level'] = requestParameters['level'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("BearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/student/catalog`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Obtener el catálogo completo de cursos disponibles en la plataforma para el estudiante autenticado. Admite filtros opcionales por categoría, nivel y estado de publicación.
+     * Catálogo de cursos para estudiantes
+     */
+    async studentCatalogGetRaw(requestParameters: StudentCatalogGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Course>>> {
+        const requestOptions = await this.studentCatalogGetRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CourseFromJSON));
+    }
+
+    /**
+     * Obtener el catálogo completo de cursos disponibles en la plataforma para el estudiante autenticado. Admite filtros opcionales por categoría, nivel y estado de publicación.
+     * Catálogo de cursos para estudiantes
+     */
+    async studentCatalogGet(requestParameters: StudentCatalogGetRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Course>> {
+        const response = await this.studentCatalogGetRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

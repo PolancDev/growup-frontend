@@ -9,6 +9,7 @@ Name | Type
 `id` | string
 `title` | string
 `description` | string
+`order` | number
 `topics` | [Array&lt;Topic&gt;](Topic.md)
 
 ## Example
@@ -21,6 +22,7 @@ const example = {
   "id": null,
   "title": null,
   "description": null,
+  "order": null,
   "topics": null,
 } satisfies Syllabus
 

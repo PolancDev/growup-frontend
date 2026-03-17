@@ -181,7 +181,11 @@ import type { CoursesIdGetRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new CursosApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: BearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new CursosApi(config);
 
   const body = {
     // string | ID del curso
@@ -213,7 +217,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[BearerAuth](../README.md#BearerAuth)
 
 ### HTTP request headers
 
@@ -324,7 +328,11 @@ import type { CoursesIdSyllabusGetRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const api = new CursosApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: BearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new CursosApi(config);
 
   const body = {
     // string | ID del curso
@@ -356,7 +364,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[BearerAuth](../README.md#BearerAuth)
 
 ### HTTP request headers
 

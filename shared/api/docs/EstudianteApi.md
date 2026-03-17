@@ -5,7 +5,9 @@ All URIs are relative to *http://localhost:8080/api/v1*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**coursesIdEnrollPost**](EstudianteApi.md#coursesidenrollpost) | **POST** /courses/{id}/enroll | Inscribirse en un curso |
+| [**coursesIdEnrolledGet**](EstudianteApi.md#coursesidenrolledget) | **GET** /courses/{id}/enrolled | Verificar inscripción en un curso |
 | [**coursesIdReviewsPost**](EstudianteApi.md#coursesidreviewspost) | **POST** /courses/{id}/reviews | Valorar un curso |
+| [**studentCatalogGet**](EstudianteApi.md#studentcatalogget) | **GET** /student/catalog | Catálogo de cursos para estudiantes |
 | [**studentEnrollmentsGet**](EstudianteApi.md#studentenrollmentsget) | **GET** /student/enrollments | Obtener mis inscripciones |
 | [**studentNotificationsGet**](EstudianteApi.md#studentnotificationsget) | **GET** /student/notifications | Obtener notificaciones |
 | [**studentNotificationsIdReadPut**](EstudianteApi.md#studentnotificationsidreadput) | **PUT** /student/notifications/{id}/read | Marcar notificación como leída |
@@ -86,6 +88,78 @@ example().catch(console.error);
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
+## coursesIdEnrolledGet
+
+> boolean coursesIdEnrolledGet(id)
+
+Verificar inscripción en un curso
+
+Verifica si el estudiante autenticado está inscrito en un curso
+
+### Example
+
+```ts
+import {
+  Configuration,
+  EstudianteApi,
+} from '';
+import type { CoursesIdEnrolledGetRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: BearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new EstudianteApi(config);
+
+  const body = {
+    // string | ID del curso
+    id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
+  } satisfies CoursesIdEnrolledGetRequest;
+
+  try {
+    const data = await api.coursesIdEnrolledGet(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | `string` | ID del curso | [Defaults to `undefined`] |
+
+### Return type
+
+**boolean**
+
+### Authorization
+
+[BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Estado de inscripción |  -  |
+| **404** | Curso no encontrado |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
 ## coursesIdReviewsPost
 
 > Review coursesIdReviewsPost(id, review)
@@ -158,6 +232,84 @@ example().catch(console.error);
 | **201** | Reseña creada exitosamente |  -  |
 | **400** | Datos inválidos o estudiante no inscrito |  -  |
 | **404** | Curso no encontrado |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## studentCatalogGet
+
+> Array&lt;Course&gt; studentCatalogGet(category, level, status)
+
+Catálogo de cursos para estudiantes
+
+Obtener el catálogo completo de cursos disponibles en la plataforma para el estudiante autenticado. Admite filtros opcionales por categoría, nivel y estado de publicación.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  EstudianteApi,
+} from '';
+import type { StudentCatalogGetRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: BearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new EstudianteApi(config);
+
+  const body = {
+    // string | Filtrar por categoría (optional)
+    category: category_example,
+    // CourseLevel | Filtrar por nivel (optional)
+    level: ...,
+    // CourseStatus | Filtrar por estado de publicación (optional)
+    status: ...,
+  } satisfies StudentCatalogGetRequest;
+
+  try {
+    const data = await api.studentCatalogGet(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **category** | `string` | Filtrar por categoría | [Optional] [Defaults to `undefined`] |
+| **level** | `CourseLevel` | Filtrar por nivel | [Optional] [Defaults to `undefined`] [Enum: Principiante, Intermedio, Avanzado] |
+| **status** | `CourseStatus` | Filtrar por estado de publicación | [Optional] [Defaults to `undefined`] [Enum: Publicado, Borrador, En Revision] |
+
+### Return type
+
+[**Array&lt;Course&gt;**](Course.md)
+
+### Authorization
+
+[BearerAuth](../README.md#BearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Lista de cursos disponibles |  -  |
+| **401** | No autenticado |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
