@@ -1,6 +1,6 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CourseService } from '../../../core/services/course.service';
-import { CourseModel } from '../../../core/models/course.model';
+import { Course } from '../../../../../../../shared/api/models';
 
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
@@ -34,26 +34,30 @@ export class Catalogo implements OnInit, OnDestroy {
 
   courseService = inject(CourseService);
   loading = signal(true);
-  filteredCourses: CourseModel[] = [];
+  allCourses: Course[] = [];
+  filteredCourses: Course[] = [];
 
   ngOnInit() {
-    this.filteredCourses = this.courseService.getCourses();
-    //console.log('this.filteredCourses: ', this.filteredCourses);
-
-    // Simular carga de datos para ver el Skeleton
-    setTimeout(() => {
-      this.loading.set(false);
-      //console.log('this.loading: ', this.loading);
-    }, 2000); // He bajado el tiempo a 2s para que no esperes tanto probando
+    this.courseService.getAllCourses().subscribe({
+      next: (courses) => {
+        this.allCourses = courses;
+        this.filteredCourses = courses;
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar el catálogo de cursos:', err);
+        this.loading.set(false);
+      }
+    });
   }
 
   buscaCurso(text: string) {
     if (!text) {
-      this.filteredCourses = this.courseService.getCourses();
+      this.filteredCourses = this.allCourses;
       return;
     }
 
-    this.filteredCourses = this.courseService.getCourses().filter(course =>
+    this.filteredCourses = this.allCourses.filter(course =>
       course.name.toLowerCase().includes(text.toLowerCase())
     );
   }

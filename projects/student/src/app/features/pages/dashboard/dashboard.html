@@ -5,36 +5,57 @@
         <header class="col-span-12 mb-6">
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Hola de nuevo! 👋</h1>
 
-            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Stat 1: Cursos Activos -->
-                <article class="h-full">
-                    <growup-stat-card title="Cursos Activos" [value]="stats?.activeCoursesCount || 0" icon="pi-book"
-                        iconBgColor="bg-blue-100" iconColor="text-blue-600" footerValue="+2 nuevos"
-                        footerText="esta semana">
-                    </growup-stat-card>
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Stat 1: Último Acceso -->
+                <article class="h-full bg-orange-100 dark:bg-orange-900/30 rounded-xl p-4 border border-orange-200 dark:border-orange-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-pointer">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-full bg-orange-200 dark:bg-orange-800 flex items-center justify-center">
+                            <i class="pi pi-calendar text-orange-700 dark:text-orange-400"></i>
+                        </div>
+                        <span class="text-xs uppercase tracking-wider text-orange-800 dark:text-orange-300">Último Acceso</span>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                        {{ lastAccessDate() ? (lastAccessDate() | date:'dd/MM/yyyy') : 'Sin acceso' }}
+                    </div>
+                    @if (lastAccessDate()) {
+                        <div class="text-sm text-orange-700 dark:text-orange-400 mt-1">
+                            {{ lastAccessDate() | date:'HH:mm' }} - última sesión
+                        </div>
+                    }
                 </article>
 
-                <!-- Stat 2: Completados -->
-                <article class="h-full">
-                    <growup-stat-card title="Completados" [value]="stats?.completedCoursesCount || 0"
-                        icon="pi-check-circle" iconBgColor="bg-green-100" iconColor="text-green-600"
-                        footerText="¡Sigue así!">
-                    </growup-stat-card>
+                <!-- Stat 2: Último Curso -->
+                <article class="h-full bg-orange-100 dark:bg-orange-900/30 rounded-xl p-4 border border-orange-200 dark:border-orange-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-pointer">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-full bg-orange-200 dark:bg-orange-800 flex items-center justify-center">
+                            <i class="pi pi-bookmark text-orange-700 dark:text-orange-400"></i>
+                        </div>
+                        <span class="text-xs uppercase tracking-wider text-orange-800 dark:text-orange-300">Último Curso</span>
+                    </div>
+                    <div class="text-lg font-bold text-gray-900 dark:text-white line-clamp-2">
+                        {{ lastCourse()?.name || 'Sin cursos' }}
+                    </div>
+                    @if (lastCourse()) {
+                        <div class="text-sm text-orange-700 dark:text-orange-400 mt-1 font-medium">
+                            {{ lastCourse()?.progress || 0 }}% completado
+                        </div>
+                    } @else {
+                        <div class="text-sm text-orange-700 dark:text-orange-400 mt-1">empieza uno</div>
+                    }
                 </article>
 
-                <!-- Stat 3: Horas Totales -->
-                <article class="h-full">
-                    <growup-stat-card title="Horas Totales" [value]="(stats?.totalHoursLearning || 0) + 'h'"
-                        icon="pi-clock" iconBgColor="bg-orange-100" iconColor="text-orange-600"
-                        footerText="de dedicación">
-                    </growup-stat-card>
-                </article>
-
-                <!-- Stat 4: Certificados -->
-                <article class="h-full">
-                    <growup-stat-card title="Certificados" [value]="stats?.certificatesEarned || 0" icon="pi-verified"
-                        iconBgColor="bg-purple-100" iconColor="text-purple-600" footerText="acreditados">
-                    </growup-stat-card>
+                <!-- Stat 3: Certificados -->
+                <article class="h-full bg-orange-100 dark:bg-orange-900/30 rounded-xl p-4 border border-orange-200 dark:border-orange-700 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-pointer">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-full bg-orange-200 dark:bg-orange-800 flex items-center justify-center">
+                            <i class="pi pi-verified text-orange-700 dark:text-orange-400"></i>
+                        </div>
+                        <span class="text-xs uppercase tracking-wider text-orange-800 dark:text-orange-300">Certificados</span>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                        {{ certificates() }}
+                    </div>
+                    <div class="text-sm text-orange-700 dark:text-orange-400 mt-1">obtenidos</div>
                 </article>
             </section>
         </header>

@@ -1,6 +1,6 @@
-import { Component, Signal, computed, inject } from '@angular/core';
+import { Component, OnInit, Signal, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EnrolledCourse } from '../../../core/models/enrollment.model';
+import { EnrolledCourse } from '@shared/api/models';
 import { CourseGroupComponent } from '../../../shared/components/course-group/course-group';
 import { DashboardService } from '../../../core/services/dashboard.service';
 
@@ -15,38 +15,50 @@ import { DashboardService } from '../../../core/services/dashboard.service';
   templateUrl: './mylearning.html',
   styles: ``,
 })
-export class Mylearning {
+export class Mylearning implements OnInit {
+
   private dashboardService = inject(DashboardService);
 
-  // Señal base de todos los cursos
-  allCourses = this.dashboardService.getEnrolledCourses();
+  // Señal base de todos los cursos (convertimos el Observable a signal)
+  private enrollments$ = signal<EnrolledCourse[]>([]);
 
+
+  ngOnInit(): void {
+    this.dashboardService.getEnrolledCourses().subscribe({
+      next: (courses) => {
+        this.enrollments$.set(courses);
+      },
+      error: (error) => {
+        console.error('Error al obtener los cursos:', error);
+      }
+    });
+  }
   /**
    * Cursos activos (en curso).
    */
   activeCourses = computed(() =>
-    this.allCourses().filter(c => c.enrollmentStatus === 'active')
+    this.enrollments$().filter(c => c.enrollmentStatus === 'active')
   );
 
   /**
    * Cursos no empezados (nuevos).
    */
   notStartedCourses = computed(() =>
-    this.allCourses().filter(c => c.enrollmentStatus === 'not_started')
+    this.enrollments$().filter(c => c.enrollmentStatus === 'not_started')
   );
 
   /**
    * Cursos completados.
    */
   completedCourses = computed(() =>
-    this.allCourses().filter(c => c.enrollmentStatus === 'completed')
+    this.enrollments$().filter(c => c.enrollmentStatus === 'completed')
   );
 
   /**
    * Cursos archivados.
    */
   archivedCourses = computed(() =>
-    this.allCourses().filter(c => c.enrollmentStatus === 'archived')
+    this.enrollments$().filter(c => c.enrollmentStatus === 'archived')
   );
 
   /**
@@ -54,6 +66,5 @@ export class Mylearning {
    */
   handleCourseAction(course: EnrolledCourse): void {
     console.log('Acción sobre el curso:', course.name, 'Estado:', course.enrollmentStatus);
-    // Aquí se implementaría la navegación o lógica de negocio (ej: empezar curso)
   }
 }

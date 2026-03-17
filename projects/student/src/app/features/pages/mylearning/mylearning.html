@@ -8,12 +8,22 @@
                 aprendiendo.</p>
         </header>
 
+        @if (activeCourses().length === 0 && notStartedCourses().length === 0 && completedCourses().length === 0 &&
+        archivedCourses().length === 0) {
+        <div class="group-container">
+            <growup-course-group title="No tienes cursos" [courses]="[]"
+                emptyMessage="No tienes cursos activos actualmente." (onCourseAction)="handleCourseAction($event)">
+            </growup-course-group>
+        </div>
+        }
         <!-- Sección: En Curso -->
+        @if (activeCourses().length > 0){
         <div class="group-container">
             <growup-course-group title="En curso" [courses]="activeCourses()"
                 emptyMessage="No tienes cursos activos actualmente." (onCourseAction)="handleCourseAction($event)">
             </growup-course-group>
         </div>
+        }
 
         <!-- Sección: Nuevos / Sin Empezar -->
         @if (notStartedCourses().length > 0) {
