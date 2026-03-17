@@ -42,7 +42,7 @@
 							},
 							{
 								"glob": "**/*.{woff,woff2,ttf,eot}",
-								"input": "projects/teacher/node_modules/primereact/resources/themes/lara-light-blue/fonts",
+								"input": "node_modules/primereact/resources/themes/lara-light-blue/fonts",
 								"output": "/fonts"
 							}
 						],
