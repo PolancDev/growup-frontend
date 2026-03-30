@@ -1,13 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { API_BASE_URL } from '@shared/api/api-tokens';
-import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { Sidebar } from './sidebar';
+import { InstallBannerComponent } from './install-banner.component';
 
-describe('Sidebar', () => {
-  let component: Sidebar;
-  let fixture: ComponentFixture<Sidebar>;
+describe('InstallBannerComponent', () => {
+  let component: InstallBannerComponent;
+  let fixture: ComponentFixture<InstallBannerComponent>;
 
   beforeEach(async () => {
     Object.defineProperty(window, 'matchMedia', {
@@ -25,22 +24,15 @@ describe('Sidebar', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [Sidebar, RouterLink],
+      imports: [InstallBannerComponent],
       providers: [
         MessageService,
-        { provide: API_BASE_URL, useValue: 'http://localhost:8080' },
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: { paramMap: { get: () => null } },
-            paramMap: { subscribe: () => {} }
-          }
-        }
+        { provide: API_BASE_URL, useValue: 'http://localhost:8080' }
       ]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(Sidebar);
+    fixture = TestBed.createComponent(InstallBannerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

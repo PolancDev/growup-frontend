@@ -2,6 +2,7 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZoneChang
 import { provideRouter } from '@angular/router';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideOAuthClient } from 'angular-oauth2-oidc';
 
 import { routes } from './app.routes';
 import { providePrimeNG } from 'primeng/config';
@@ -20,6 +21,7 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(withInterceptorsFromDi()),
+    provideOAuthClient(),
     AUTH_INTERCEPTOR_PROVIDER,
     { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
     provideRouter(routes),

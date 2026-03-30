@@ -32,4 +32,10 @@ export default defineConfig({
       '@shared': resolve(__dirname, '../../shared'),
     },
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}']
+  },
 })

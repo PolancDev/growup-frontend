@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="No image">
+  <title>No image</title>
+  <desc>Transparent placeholder image for missing course thumbnails.</desc>
+
+  <!-- Transparent background by default -->
+  <rect x="40" y="40" width="1120" height="595" rx="28" fill="none" stroke="#94a3b8" stroke-width="10" stroke-dasharray="24 18"/>
+
+  <!-- Simple "image" glyph -->
+  <rect x="210" y="170" width="420" height="290" rx="22" fill="none" stroke="#64748b" stroke-width="12"/>
+  <circle cx="330" cy="255" r="34" fill="none" stroke="#64748b" stroke-width="12"/>
+  <path d="M250 420 L370 315 L455 380 L560 265 L590 290 L590 440 L250 440 Z" fill="none" stroke="#64748b" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- "NO IMAGE" text -->
+  <g fill="#475569" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif" font-weight="700">
+    <text x="690" y="305" font-size="54" letter-spacing="2">SIN IMAGEN</text>
+    <text x="690" y="360" font-size="26" font-weight="600" opacity="0.9">Miniatura del curso no disponible</text>
+  </g>
+</svg>

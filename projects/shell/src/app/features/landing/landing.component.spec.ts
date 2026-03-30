@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 import { MessageService } from 'primeng/api';
 import { API_BASE_URL } from '@shared/api/api-tokens';
-import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { Sidebar } from './sidebar';
+import { LandingComponent } from './landing.component';
+import { ToastComponent } from '../../shared/toast-component/toast-component';
 
-describe('Sidebar', () => {
-  let component: Sidebar;
-  let fixture: ComponentFixture<Sidebar>;
+describe('LandingComponent', () => {
+  let component: LandingComponent;
+  let fixture: ComponentFixture<LandingComponent>;
 
   beforeEach(async () => {
     Object.defineProperty(window, 'matchMedia', {
@@ -25,22 +26,19 @@ describe('Sidebar', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [Sidebar, RouterLink],
+      imports: [
+        LandingComponent,
+        ToastComponent,
+        RouterTestingModule
+      ],
       providers: [
         MessageService,
-        { provide: API_BASE_URL, useValue: 'http://localhost:8080' },
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: { paramMap: { get: () => null } },
-            paramMap: { subscribe: () => {} }
-          }
-        }
+        { provide: API_BASE_URL, useValue: 'http://localhost:8080' }
       ]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(Sidebar);
+    fixture = TestBed.createComponent(LandingComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

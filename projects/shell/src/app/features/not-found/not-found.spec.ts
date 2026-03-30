@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { NotFound } from './not-found';
 
@@ -8,7 +10,16 @@ describe('NotFound', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [NotFound]
+      imports: [NotFound, RouterLink],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: { get: () => null } },
+            paramMap: { subscribe: () => {} }
+          }
+        }
+      ]
     })
     .compileComponents();
 

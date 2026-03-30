@@ -39,40 +39,16 @@ export class LoginComponent {
     password: ['', [Validators.required, Validators.pattern(this.formUtils.passPattern)]]
   });
 
+  /**
+   * Login using Keycloak OAuth2 (SSO)
+   */
+  loginWithSSO() {
+    console.log('GrowUp-Log: LoginComponent - Redirecting to Keycloak...');
+    this.authService.loginWithKeycloak();
+  }
+
   onSubmit() {
-    if (this.loginForm.touched || this.loginForm.dirty) {
-      if (this.loginForm.invalid) {
-        //console.log('Formulario invalido');
-        this.hasError.set(true);
-      } else {
-        this.hasError.set(false);
-        this.hasSuccess.set(false);
-        //console.log('Login data:', this.loginForm.value);
-        const { email, password } = this.loginForm.value;
-        this.authService.login(email, password).subscribe({
-          next: () => {
-            switch (this.authService.userRole()) {
-              case Role.STUDENT:
-                this.router.navigate(['/private/student']);
-                break;
-              case Role.TEACHER:
-                console.log('TEACHER');
-                this.router.navigate(['/private/teacher']);
-                break;
-              case Role.ADMIN:
-                this.router.navigate(['/private/admin']);
-                break;
-            }
-          },
-          error: (err) => {
-            console.error('Error al iniciar sesión:', err);
-            this.hasError.set(true);
-          }
-        });
-        // TODO: Implement actual login service call
-      }
-    } else {
-      this.hasSuccess.set(false);
-    }
+    // Still allow traditional login but redirect to Keycloak
+    this.loginWithSSO();
   }
 }

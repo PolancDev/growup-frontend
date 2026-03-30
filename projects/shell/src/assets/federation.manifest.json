@@ -1,1 +1,5 @@
-{}
+{
+  "teacher": "http://localhost:4202/remoteEntry.json",
+  "student": "http://localhost:4203/remoteEntry.json",
+  "admin": "http://localhost:4204/remoteEntry.json"
+}

@@ -9,6 +9,14 @@ import { Configuration } from '../../../../../../shared/api/runtime';
 import { environment } from '../../../environments/environment';
 import { AuthResponse } from '@shared/api/models';
 import { ApiConfigService } from '@shared/api/api-config.service';
+import { KeycloakConfigService } from './keycloak-config.service';
+
+export interface KeycloakUserProfile {
+  sub: string;
+  email: string;
+  name: string;
+  roles: string[];
+}
 
 @Injectable({
   providedIn: 'root',
@@ -22,12 +30,69 @@ export class AuthService {
   private apiConfig = inject(ApiConfigService);
   private authApi = new AutenticacinApi(this.apiConfig.configuration);
   private router: Router;
+  private keycloakService: KeycloakConfigService;
 
   constructor() {
     this.router = inject(Router);
+    this.keycloakService = inject(KeycloakConfigService);
+    
+    // Initialize from Keycloak if available
+    this.initFromKeycloak();
+  }
+
+  private initFromKeycloak() {
+    // Subscribe to Keycloak authentication state
+    this.keycloakService.isAuthenticated$.subscribe(isAuthenticated => {
+      if (isAuthenticated) {
+        const profile = this.keycloakService.getUserProfile();
+        if (profile) {
+          this.setKeycloakUser(profile);
+        }
+      }
+    });
+
+    // Also check if we have a valid token in localStorage
+    this.checkAuthStatus();
+  }
+
+  /**
+   * Set user from Keycloak profile
+   */
+  setKeycloakUser(profile: KeycloakUserProfile) {
+    const role = profile.roles.includes('ADMIN') ? Role.ADMIN 
+      : profile.roles.includes('TEACHER') ? Role.TEACHER 
+      : Role.STUDENT;
+
+    this._user.set({
+      id: profile.sub,
+      role: role,
+      name: profile.name,
+      isActive: true,
+      email: profile.email
+    });
+
+    // Get and store token
+    const token = this.keycloakService.getAccessToken();
+    if (token) {
+      this._token.set(token);
+      localStorage.setItem('growup-token', token);
+    }
+
+    this._statusUser.set(AuthStatus.authenticated);
+    console.log('GrowUp-Log: AuthService - User set from Keycloak:', profile.email);
   }
 
   checkAuthStatus() {
+    // First check Keycloak
+    if (this.keycloakService.isAuthenticated()) {
+      const profile = this.keycloakService.getUserProfile();
+      if (profile) {
+        this.setKeycloakUser(profile);
+        return true;
+      }
+    }
+
+    // Fallback to localStorage token
     const token = localStorage.getItem('growup-token');
     if (token) {
       const decoded = this.decodeToken(token);
@@ -114,17 +179,22 @@ export class AuthService {
     return this._user()?.isActive || false;
   }
 
-  login(email: string, password: string): Observable<boolean> {
-    this.checkAuthStatus();
-    return from(this.authApi.authLoginPost({ loginRequest: { email, password } })).pipe(
-      map(response => this.handleAuthSuccess(response)),
-      catchError(error => {
-        console.error('Login error:', error);
-        return of(false);
-      })
-    );
+  /**
+   * Login using Keycloak OAuth2
+   */
+  loginWithKeycloak() {
+    this.keycloakService.login();
   }
 
+  /**
+   * Legacy login method - redirects to Keycloak
+   * @deprecated Use loginWithKeycloak() instead
+   */
+  login(email: string, password: string): Observable<boolean> {
+    // Redirect to Keycloak login
+    this.loginWithKeycloak();
+    return of(true);
+  }
 
   private clearAuth() {
     this._user.set(null);
@@ -135,6 +205,8 @@ export class AuthService {
 
   logout() {
     this.clearAuth();
+    // Also logout from Keycloak
+    this.keycloakService.logout();
     if (this.router) {
       this.router.navigate(['/auth/login']);
     }

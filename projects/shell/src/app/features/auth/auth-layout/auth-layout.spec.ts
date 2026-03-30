@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MessageService } from 'primeng/api';
 
 import { AuthLayout } from './auth-layout';
 
@@ -8,7 +9,8 @@ describe('AuthLayout', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AuthLayout]
+      imports: [AuthLayout],
+      providers: [MessageService]
     })
     .compileComponents();
 
