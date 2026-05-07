@@ -13,6 +13,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { User } from '@shared/interfaces/user.interface';
 import { FichaUser } from '../../../shared/componentes/fichaUser/ficha-user';
+import { DateFormatPipe } from '../../../core/pipes/date-format.pipe';
 
 @Component({
   selector: 'growup-users-management',
@@ -29,7 +30,8 @@ import { FichaUser } from '../../../shared/componentes/fichaUser/ficha-user';
     AvatarModule,
     TooltipModule,
     DialogModule,
-    FichaUser
+    FichaUser,
+    DateFormatPipe
   ],
   templateUrl: './users-management.html',
   styleUrl: './users-management.scss',
@@ -52,11 +54,11 @@ export class UsersManagement implements OnInit {
   totalTeachers = this.usersService.totalTeachers;
 
   ngOnInit(): void {
-    console.log('Gestión de Usuarios inicializada');
+    this.usersService.fetchUsers().subscribe();
   }
 
   toggleStatus(userId: string) {
-    this.usersService.toggleUserStatus(userId);
+    this.usersService.toggleUserStatus(userId).subscribe();
   }
 
   getSeverity(isActive: boolean) {

@@ -12,13 +12,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'growup-admin-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    CardModule,
-    ChartModule,
-    ButtonModule,
-    CoursePreviewDialog,
-  ],
+  imports: [CommonModule, CardModule, ChartModule, ButtonModule, CoursePreviewDialog],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
 })
@@ -41,6 +35,8 @@ export class AdminDashboard implements OnInit {
   distributionOptions: any;
 
   ngOnInit() {
+    // Cargar cursos para mostrar propuestas pendientes
+    this.coursesService.getCourses().subscribe();
     this.initCharts();
   }
 
@@ -52,7 +48,8 @@ export class AdminDashboard implements OnInit {
   initCharts() {
     const documentStyle = getComputedStyle(document.documentElement);
     const textColor = documentStyle.getPropertyValue('--text-color') || '#495057';
-    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary') || '#6b7280';
+    const textColorSecondary =
+      documentStyle.getPropertyValue('--text-color-secondary') || '#6b7280';
     const surfaceBorder = documentStyle.getPropertyValue('--surface-border') || '#dfe7ef';
 
     this.growthData = {
@@ -64,7 +61,7 @@ export class AdminDashboard implements OnInit {
           fill: true,
           borderColor: '#3b82f6',
           tension: 0.5,
-          backgroundColor: 'rgba(59, 130, 246, 0.1)'
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
         },
         {
           label: 'Baja de Estudiantes',
@@ -72,28 +69,27 @@ export class AdminDashboard implements OnInit {
           fill: true,
           borderColor: '#f8b626ff',
           tension: 0.5,
-          backgroundColor: 'rgba(59, 130, 246, 0.1)'
-        }
-      ]
-
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        },
+      ],
     };
 
     this.growthOptions = {
       maintainAspectRatio: false,
       aspectRatio: 0.6,
       plugins: {
-        legend: { display: true }
+        legend: { display: true },
       },
       scales: {
         x: {
           ticks: { color: textColorSecondary },
-          grid: { color: surfaceBorder, drawBorder: false }
+          grid: { color: surfaceBorder, drawBorder: false },
         },
         y: {
           ticks: { color: textColorSecondary },
-          grid: { color: surfaceBorder, drawBorder: false }
-        }
-      }
+          grid: { color: surfaceBorder, drawBorder: false },
+        },
+      },
     };
 
     this.distributionData = {
@@ -102,9 +98,9 @@ export class AdminDashboard implements OnInit {
         {
           data: [45, 25, 15, 15],
           backgroundColor: ['#22C55E', '#3b82f6', '#FF7A00', '#A855F7'],
-          hoverBackgroundColor: ['#16A34A', '#2563eb', '#EA580C', '#9333EA']
-        }
-      ]
+          hoverBackgroundColor: ['#16A34A', '#2563eb', '#EA580C', '#9333EA'],
+        },
+      ],
     };
 
     this.distributionOptions = {
@@ -112,9 +108,9 @@ export class AdminDashboard implements OnInit {
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { color: textColor, usePointStyle: true }
-        }
-      }
+          labels: { color: textColor, usePointStyle: true },
+        },
+      },
     };
   }
 }

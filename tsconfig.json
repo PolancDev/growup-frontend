@@ -3,24 +3,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@teacher/*": [
-        "projects/teacher/src/*"
-      ],
-      "@shared/*": [
-        "shared/*"
-      ],
-      "@shared/models/*": [
-        "shared/models/*"
-      ],
-      "@shared/interfaces/*": [
-        "shared/interfaces/*"
-      ],
-      "@admin/*": [
-        "projects/admin/src/*"
-      ]
-    },
     "skipLibCheck": true,
     "isolatedModules": true,
     "experimentalDecorators": true,

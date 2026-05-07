@@ -4,10 +4,18 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../out-tsc/app",
+    "rootDir": "../../",
+    "paths": {
+      "@shared/*": ["../../shared/*"],
+      "@shared/models/*": ["../../shared/models/*"],
+      "@shared/interfaces/*": ["../../shared/interfaces/*"],
+      "@admin/*": ["../../projects/admin/src/*"]
+    },
     "types": []
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "../../shared/**/*.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts"
