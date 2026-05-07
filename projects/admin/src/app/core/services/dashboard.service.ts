@@ -29,8 +29,6 @@ export class DashboardService {
     public stats = computed(() => this._stats());
     public pendingCourses = computed(() => this._pendingCourses());
 
-    constructor() { }
-
     // Futuras llamadas a la API
     refreshData() {
         // Aquí iría el fetch/HttpClient

@@ -33,6 +33,7 @@ export interface CourseModel {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     deletedAt?: Date | string | null;
+    instructorId?: string;  // ID del instructor (del backend)
     instructor?: InstructorModel;
     syllabus?: SyllabusModel[];
     enrolledCount?: number;

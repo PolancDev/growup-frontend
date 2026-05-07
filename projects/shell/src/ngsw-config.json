@@ -29,27 +29,15 @@
     ],
     "dataGroups": [
         {
-            "name": "api-external",
+            "name": "api-backend",
             "urls": [
-                "https://api.example.com/**"
-            ],
-            "cacheConfig": {
-                "strategy": "performance",
-                "maxAge": "1d",
-                "timeout": "10s",
-                "maxSize": 100
-            }
-        },
-        {
-            "name": "api-internal",
-            "urls": [
-                "/api/**"
+                "http://localhost:8080/**"
             ],
             "cacheConfig": {
                 "strategy": "freshness",
-                "maxSize": 100,
-                "maxAge": "1h",
-                "timeout": "5s"
+                "maxSize": 0,
+                "maxAge": "0u",
+                "timeout": "0s"
             }
         }
     ]

@@ -74,11 +74,11 @@
                                 <td class="py-4"><span class="text-gray-600 dark:text-gray-400 font-medium">{{
                                         user.email }}</span></td>
                                 <td class="py-4"><span class="text-gray-500 dark:text-gray-500 text-sm font-medium">{{
-                                        user.joinDate }}</span></td>
+                                        user.joinDate | dateFormat }}</span></td>
                                 <td class="py-4">
                                     <p-tag [value]="user.isActive ? 'Activo' : 'Inactivo'"
                                         [severity]="getSeverity(user.isActive)"
-                                        styleClass="rounded-full px-4 font-bold" />
+                                        class="rounded-full px-4 font-bold" />
                                 </td>
                                 <td class="py-4">
                                     <div class="flex gap-1">

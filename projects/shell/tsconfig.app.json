@@ -4,6 +4,13 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../out-tsc/app",
+    "rootDir": "../../",
+    "paths": {
+      "@teacher/*": ["../../projects/teacher/src/*"],
+      "@shared/*": ["../../shared/*"],
+      "@shared/models/*": ["../../shared/models/*"],
+      "@shared/interfaces/*": ["../../shared/interfaces/*"]
+    },
     "types": [
       "node"
     ],

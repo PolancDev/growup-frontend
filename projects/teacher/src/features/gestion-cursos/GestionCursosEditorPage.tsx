@@ -9,6 +9,8 @@ import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Divider } from 'primereact/divider';
 import { addLocale } from 'primereact/api';
+import { Toast } from 'primereact/toast';
+import { useRef } from 'react';
 import type { SyllabusModel } from '@shared/models/course.model';
 import { CourseService } from '../../core/services/courses.service';
 import type { CourseItem } from '../../core/models/courses.models';
@@ -29,6 +31,7 @@ export default function GestionCursosEditorPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEdit = Boolean(id);
+    const toast = useRef<Toast>(null);
 
     // Estado del formulario
     const [form, setForm] = useState<{
@@ -44,7 +47,7 @@ export default function GestionCursosEditorPage() {
         description: '',
         category: '',
         level: '',
-        price: 0,
+        price: 49.99,
         startDate: null,
         endDate: null,
     });
@@ -73,7 +76,16 @@ export default function GestionCursosEditorPage() {
                             endDate: course.endDate ? new Date(course.endDate) : null,
                         });
                         if (course.syllabus && course.syllabus.length > 0) {
-                            setSyllabus(course.syllabus);
+                            // Asegurar que duration sea número en todos los topics
+                            const normalizedSyllabus = course.syllabus.map(section => ({
+                                ...section,
+                                topics: section.topics.map(topic => ({
+                                    ...topic,
+                                    duration: typeof topic.duration === 'string' ? parseInt(topic.duration, 10) || 0 : (topic.duration || 0)
+                                }))
+                            }));
+                            console.log('🟡 Syllabus cargado (normalizado):', normalizedSyllabus);
+                            setSyllabus(normalizedSyllabus);
                         }
                     }
                 })
@@ -106,11 +118,18 @@ export default function GestionCursosEditorPage() {
     };
 
     const handleTopicChange = (sectionIndex: number, topicIndex: number, field: 'title' | 'duration', value: string | number) => {
+        console.log(`🟡 handleTopicChange - section: ${sectionIndex}, topic: ${sectionIndex}, field: ${field}, value:`, value, 'type:', typeof value);
+        
         const newSyllabus = [...syllabus];
+        // Asegurar que duration sea número
+        const finalValue = field === 'duration' ? (typeof value === 'string' ? parseInt(value, 10) || 0 : (value || 0)) : value;
+        
         newSyllabus[sectionIndex].topics[topicIndex] = {
             ...newSyllabus[sectionIndex].topics[topicIndex],
-            [field]: value
+            [field]: finalValue
         };
+        
+        console.log('🟢 Topic actualizado:', newSyllabus[sectionIndex].topics[topicIndex]);
         setSyllabus(newSyllabus);
     };
 
@@ -143,6 +162,15 @@ export default function GestionCursosEditorPage() {
 
         setLoading(true);
         try {
+            // Normalizar syllabus antes de enviar
+            const normalizedSyllabus = syllabus.map(section => ({
+                ...section,
+                topics: section.topics.map(topic => ({
+                    title: topic.title,
+                    duration: Number(topic.duration) || 0
+                }))
+            }));
+
             const courseData: CourseItem = {
                 id: id || String(Date.now()),
                 name: form.name,
@@ -155,8 +183,10 @@ export default function GestionCursosEditorPage() {
                 level: form.level as 'Principiante' | 'Intermedio' | 'Avanzado',
                 startDate: form.startDate,
                 endDate: form.endDate,
-                syllabus: syllabus
+                syllabus: normalizedSyllabus
             };
+
+            console.log('🟡 Guardando borrador con syllabus:', JSON.stringify(normalizedSyllabus, null, 2));
 
             if (isEdit && id) {
                 await CourseService.updateCourse(id, courseData);
@@ -174,12 +204,46 @@ export default function GestionCursosEditorPage() {
     // Función para guardar nuevo curso (solo en modo creación)
     const handleSaveNew = async () => {
         if (!form.category) {
-            console.error('La categoría es obligatoria');
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'La categoría es obligatoria',
+                life: 3000
+            });
+            return;
+        }
+
+        if (!form.name.trim()) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'El nombre del curso es obligatorio',
+                life: 3000
+            });
+            return;
+        }
+
+        if (!form.price || form.price <= 0) {
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'El precio debe ser mayor que 0',
+                life: 3000
+            });
             return;
         }
 
         setLoading(true);
         try {
+            // Normalizar syllabus antes de enviar
+            const normalizedSyllabus = syllabus.map(section => ({
+                ...section,
+                topics: section.topics.map(topic => ({
+                    title: topic.title,
+                    duration: Number(topic.duration) || 0
+                }))
+            }));
+
             const courseData: CourseItem = {
                 id: String(Date.now()),
                 name: form.name,
@@ -192,15 +256,29 @@ export default function GestionCursosEditorPage() {
                 level: form.level as 'Principiante' | 'Intermedio' | 'Avanzado',
                 startDate: form.startDate,
                 endDate: form.endDate,
-                syllabus: syllabus
+                syllabus: normalizedSyllabus
             };
 
-            await CourseService.createCourse(courseData);
-            console.log('Curso creado y enviado a revisión');
+            console.log('🟡 Creando curso con syllabus:', JSON.stringify(normalizedSyllabus, null, 2));
+            const createdCourse = await CourseService.createCourse(courseData);
+            console.log('🟢 Curso creado:', createdCourse);
+
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: 'Curso creado y enviado a revisión',
+                life: 3000
+            });
 
             navigate('/gestion-cursos');
-        } catch (error) {
-            console.error('Error al guardar curso:', error);
+        } catch (error: any) {
+            console.error('🔴 Error al guardar curso:', error);
+            toast.current?.show({
+                severity: 'error',
+                summary: 'Error',
+                detail: error.message || 'No se pudo crear el curso',
+                life: 5000
+            });
         } finally {
             setLoading(false);
         }
@@ -215,6 +293,15 @@ export default function GestionCursosEditorPage() {
 
         setLoading(true);
         try {
+            // Normalizar syllabus antes de enviar
+            const normalizedSyllabus = syllabus.map(section => ({
+                ...section,
+                topics: section.topics.map(topic => ({
+                    title: topic.title,
+                    duration: Number(topic.duration) || 0
+                }))
+            }));
+
             const courseData: CourseItem = {
                 id: id || String(Date.now()),
                 name: form.name,
@@ -227,8 +314,10 @@ export default function GestionCursosEditorPage() {
                 level: form.level as 'Principiante' | 'Intermedio' | 'Avanzado',
                 startDate: form.startDate,
                 endDate: form.endDate,
-                syllabus: syllabus
+                syllabus: normalizedSyllabus
             };
+
+            console.log('🟡 Enviando curso con syllabus:', JSON.stringify(normalizedSyllabus, null, 2));
 
             if (isEdit && id) {
                 await CourseService.updateCourse(id, courseData);
@@ -248,6 +337,7 @@ export default function GestionCursosEditorPage() {
 
     return (
         <div className="max-w-5xl mx-auto p-4 space-y-8 animate-fade-in pb-20 transition-colors duration-300">
+            <Toast ref={toast} position="top-right" />
             {/* Header Sticky */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface/80 dark:bg-surface/80 backdrop-blur-md p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800 sticky top-4 z-10 shadow-sm">
                 <div>
@@ -420,7 +510,13 @@ export default function GestionCursosEditorPage() {
                                                     className="w-24 text-sm flex-shrink-0"
                                                     inputClassName="w-full p-2 border-gray-100 dark:border-gray-800 bg-surface dark:bg-surface text-text dark:text-text text-center font-bold"
                                                     value={topic.duration}
-                                                    onValueChange={(e) => handleTopicChange(sIdx, tIdx, 'duration', e.value || 0)}
+                                                    onValueChange={(e) => {
+                                                        console.log('🟡 InputNumber onValueChange:', e.value, 'tipo:', typeof e.value);
+                                                        handleTopicChange(sIdx, tIdx, 'duration', e.value ?? 0);
+                                                    }}
+                                                    mode="decimal"
+                                                    min={0}
+                                                    max={999}
                                                 />
                                                 <Button
                                                     icon="pi pi-times"
